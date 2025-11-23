@@ -1,0 +1,969 @@
+<head>
+	<title>PHUMA</title>
+	<meta property="og:title" content="PHUMA:">
+	<meta property="og:description" content="Physically-Grounded Humanoid Locomotion Dataset">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="./dataset/css/bulma.min.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+	<script type="text/javascript">
+		function toggle(id) {
+			var e = document.getElementById(id);
+			if(e.style.display == 'block')
+				e.style.display = 'none';
+			else
+				e.style.display = 'block';
+		}
+		
+		var carouselPositions = {};
+		var carouselTransitioning = {};
+		var carouselItemsPerView = {
+			'stationary-carousel': 3,
+			'angular-carousel': 3,
+			'vertical-carousel': 3,
+			'horizontal-carousel': 3,
+			'isaacgym-unseen-motions-carousel': 1,
+			'isaacgym-test-videos-carousel': 1,
+			'mujoco-unseen-motions-carousel': 1,
+			'mujoco-test-videos-carousel': 1,
+			'gmr-small-carousel': 1,
+			'gmr-big-carousel': 1,
+			'maskedmimic-imitation-carousel': 1,
+			'path-following-carousel': 1
+		};
+		
+		function initCarousel(carouselId) {
+			var wrapper = document.getElementById(carouselId);
+			var track = wrapper.querySelector('.carousel-track');
+			var items = track.querySelectorAll('.carousel-item');
+			var itemsPerView = carouselItemsPerView[carouselId] || 3;
+			
+			// CSS에서 이미 width를 설정했으므로 JavaScript에서는 transform만 조정
+			carouselPositions[carouselId] = 0;
+			track.style.transform = 'translateX(0%)';
+			updateCarouselButtons(carouselId, items.length, itemsPerView);
+		}
+		
+		function moveCarousel(carouselId, direction) {
+			// Transition 중이면 무시
+			if (carouselTransitioning[carouselId]) {
+				return;
+			}
+			
+			var wrapper = document.getElementById(carouselId);
+			var track = wrapper.querySelector('.carousel-track');
+			var items = track.querySelectorAll('.carousel-item');
+			var itemsPerView = carouselItemsPerView[carouselId] || 3;
+			var maxPosition = items.length - itemsPerView;
+			
+			if (!carouselPositions.hasOwnProperty(carouselId)) {
+				carouselPositions[carouselId] = 0;
+			}
+			
+			var newPosition = carouselPositions[carouselId] + direction;
+			
+			if (newPosition < 0) {
+				newPosition = 0;
+			}
+			if (newPosition > maxPosition) {
+				newPosition = maxPosition;
+			}
+			
+			// 위치가 변경되지 않으면 무시
+			if (newPosition === carouselPositions[carouselId]) {
+				return;
+			}
+			
+			carouselPositions[carouselId] = newPosition;
+			carouselTransitioning[carouselId] = true;
+			
+			var translateX = -(carouselPositions[carouselId] * (100 / itemsPerView));
+			track.style.transform = 'translateX(' + translateX + '%)';
+			
+			updateCarouselButtons(carouselId, items.length, itemsPerView);
+			
+			// Transition 완료 후 플래그 해제
+			setTimeout(function() {
+				carouselTransitioning[carouselId] = false;
+			}, 300);
+		}
+		
+		function updateCarouselButtons(carouselId, totalItems, itemsPerView) {
+			var maxPosition = totalItems - itemsPerView;
+			var leftBtn = document.querySelector('#' + carouselId).parentElement.querySelector('.carousel-btn-left');
+			var rightBtn = document.querySelector('#' + carouselId).parentElement.querySelector('.carousel-btn-right');
+			
+			if (leftBtn) {
+				leftBtn.style.opacity = carouselPositions[carouselId] <= 0 ? '0.5' : '1';
+				leftBtn.style.pointerEvents = carouselPositions[carouselId] <= 0 ? 'none' : 'auto';
+			}
+			if (rightBtn) {
+				rightBtn.style.opacity = carouselPositions[carouselId] >= maxPosition ? '0.5' : '1';
+				rightBtn.style.pointerEvents = carouselPositions[carouselId] >= maxPosition ? 'none' : 'auto';
+			}
+		}
+		
+		window.addEventListener('DOMContentLoaded', function() {
+			initCarousel('stationary-carousel');
+			initCarousel('angular-carousel');
+			initCarousel('vertical-carousel');
+			initCarousel('horizontal-carousel');
+			initCarousel('isaacgym-unseen-motions-carousel');
+			initCarousel('isaacgym-test-videos-carousel');
+			initCarousel('mujoco-unseen-motions-carousel');
+			initCarousel('mujoco-test-videos-carousel');
+			initCarousel('gmr-small-carousel');
+			initCarousel('gmr-big-carousel');
+			initCarousel('maskedmimic-imitation-carousel');
+			initCarousel('path-following-carousel');
+		});
+	</script>
+	<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+			tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+		});
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+</head>
+<div class="header" id="top">
+	<h1><span class="bold phuma">PHUMA </span><br/>Physically-Grounded Motion Retarget Dataset<br/>for Humanoid Imitation Learning</h1>
+	<h3><a class="bold default-color">Paper 10482<br/></h3>
+	
+</div>
+<div class="content">
+	<div class="hr"></div>
+	<h2>PHUMA Examples</h2>
+	<div class="carousel-section">
+		<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Stationary</h3>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('stationary-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="stationary-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/000048_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/000731_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/001571_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/004221_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/006503_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/007517_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/007989_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/008444_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/009054_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/stationary/011993_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('stationary-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
+
+	<div class="carousel-section">
+		<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Angular</h3>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('angular-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="angular-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/000617_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/001650_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/002443_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/002946_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/003102_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/009529_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/010414_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/012209_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/013071_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/angular/013670_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('angular-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
+
+	<div class="carousel-section">
+		<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Vertical</h3>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('vertical-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="vertical-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/000523_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/002547_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/004303_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/006035_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/007826_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/010179_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/012056_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/012392_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/012853_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/vertical/014118_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('vertical-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
+
+	<div class="carousel-section">
+		<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Horizontal</h3>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('horizontal-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="horizontal-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/001652_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/006270_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/006379_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/006465_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/006693_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/007649_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/008088_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/008271_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/010823_chunk_0002.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/horizontal/011610_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('horizontal-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
+</div>
+<div class="content">
+	<div class="hr"></div>
+	<div style="overflow: hidden">
+		<h2>Evaluation of Retargeting Methods</h2>
+		<p class="figure-caption">
+			The video below shows the example of retargeting results using different retargeting methods. Mink[1] shows unnatural locomotion
+			patterns where the humanoid appears to walk on a tightrope, and SINK[2] shows more human-like results, but still shows some floating and penetration. Our PhySINK shows not only remaining human-like, but also physically reliable motions.
+		</p>
+		<video playsinline="" autoplay="" loop="" preload="" muted="" width="99%">
+			<source src="videos/Retargeting_Methods_Evaluation.mp4" type="video/mp4">
+		</video>
+		<p class="figure-caption">
+			[1] Kevin Zakka. Mink: Python inverse kinematics based on MuJoCo, 2025. <br>
+			[2] He et al. Learning human-to-humanoid real-time whole-body teleoperation, IROS 2024.
+		</p>
+	</div>
+	<div class="hr"></div>
+	<div style="overflow: hidden">
+		<h2>Qualitative Comparison with GMR</h2>
+		<p class="figure-caption">
+			The video below shows the qualitative comparison with GMR[3]. GMR retargets motion using a fixed height derived from the first component of beta, which is the maximum parameter that determines the shape of human motion. However, this parameter may not correspond to the actual height of the human. As a result, GMR exhibits imperfect retargeting when the human subject is significantly smaller or larger than average.
+		</p>
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Small Humans</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('gmr-small-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="gmr-small-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_000480_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_000488_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_000630_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_000630_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_003578_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_005423_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_005423_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_007102_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('gmr-small-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Big Humans</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('gmr-big-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="gmr-big-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_001536_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_002057_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_002585_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_003383_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_003405_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_003738_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_003978_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/big/humanml_006440_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('gmr-big-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+		<p class="figure-caption">
+			[3] Ze et al, GMR: General Motion Retargeting, arXiv 2025.
+		</p>
+	</div>
+	<div class="hr"></div>
+	<div>
+		<h2>Imitation Performance</h2>
+		<p class="figure-caption">
+			In motion imitation tasks, we train policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen motions. We use MaskedMimic[4] for training, and all policies are trained on IsaacGym. The videos below show qualitative motion imitation results using the student policy on unseen motions. The ghost represents the reference motion to be imitated. As shown, the policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
+		</p>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('maskedmimic-imitation-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="maskedmimic-imitation-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/bend/humanml_004718_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/bend/humanml_007304_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/jump/LAFAN1_jumps1_subject1_chunk_0016.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/kick/humanml_000369_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/kick/humanml_002255_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/kick/humanml_010777_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/stand/humanml_007400_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/stand/humanml_010254_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/stand/humanml_013610_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/twist/humanml_001038_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/walk/humanml_000597_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/walk/humanml_003248_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/walk/LAFAN1_fight1_subject2_chunk_0035.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/run/LAFAN1_fight1_subject2_chunk_0017.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/run/LAFAN1_run1_subject2_chunk_0017.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/run/LAFAN1_run1_subject2_chunk_0056.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-val/run/LAFAN1_run1_subject5_chunk_0001.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('maskedmimic-imitation-carousel', 1)">&#8250;</button>
+		</div>
+		<p class="figure-caption">
+			[4] Tessler et al, MaskedMimic: Unified Physics-Based Character Control Through Masked Motion, SIGGRAPH 2024.
+		</p>
+	</div>
+	<div class="hr"></div>
+	<div>
+		<h2>Path Following Performance</h2>
+		<p class="figure-caption">
+			In path following tasks, we distill the teacher policy by providing only the pelvis information (position and rotation) from the reference motions. We train path following policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen paths. The videos below show qualitative path following results using the student policy on unseen paths. 
+		</p>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('path-following-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="path-following-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/jump/LAFAN1_jumps1_subject1_chunk_0005.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/jump/LAFAN1_jumps1_subject1_chunk_0030.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/squat/fitness_subset_0005_4_Squat_Pulses_1_Jump_clip_2_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/squat/fitness_subset_0027_Chair_Squat_Pulse_To_Lfg_Lift_R_clip_33_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/squat/humanml_012482_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/walk/humanml_001838_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/walk/humanml_001891_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/walk/humanml_002286_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/walk/humanml_003558_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/walk/LAFAN1_walk2_subject1_chunk_0011.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/run/humanml_011839_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/run/LAFAN1_run1_subject5_chunk_0038.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/run/LAFAN1_run2_subject4_chunk_0051.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/maskedmimic-path_following-val/run/LocoMuJoCo_run_chunk_0078.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('path-following-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
+	<div class="hr"></div>
+	<div>
+		<h2>Imitation Performance</h2>
+		<p class="figure-caption">
+			In motion imitation tasks, we train a policy on <span class="phuma">PHUMA</span> and evaluate it on unseen motions from test videos, comparing it with a policy trained on AMASS. We use MLP version of kungfubot[5] for training. All policies are trained on Isaacgym. The video below shows qualitative motion imitation results using the student policy on unseen motions and test videos. The ghost represents the reference motion to be imitated. As shown, the student policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
+		</p>
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Unseen Motions</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('isaacgym-unseen-motions-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="isaacgym-unseen-motions-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/jump/humanml_013477_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/jump/humanml_008188_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/kick/fitness_subset_0006_Chasse_Arm_Circle_clip_7_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/kick/fitness_subset_0035_Side_To_Side_Step_Singi_F_Arm_Swing_R_clip_5_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/kick/fitness_subset_0079_Step_Out_clip_1_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/kick/fitness_subset_0086_Side_Step_To_905_Butt_Kicks_clip_61_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/kick/humanml_006364_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/lunge/game_motion_subset_0005_Dual_Wield_Zweischwertkrabbe_clip_7_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/squat/fitness_subset_0013_Side_Step_Arm_Swing_To_Claf_clip_11_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/walk/humanml_003435_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/walk/humanml_010342_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/walk/idea400_Hand_touches_thigh_and_walking_at_the_same_time_clip1_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/walk/LocoMuJoCo_walk_chunk_0021_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/run/humanml_001877_chunk_0000_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-val/run/humanml_010683_chunk_0001_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('isaacgym-unseen-motions-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Test Videos</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('isaacgym-test-videos-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="isaacgym-test-videos-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-unseen_video/jump/jump_chunk_0007_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-unseen_video/kick/kick_chunk_0030_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-unseen_video/kick/kick_chunk_0044_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-unseen_video/twist/twist_chunk_0046_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/isaacgym-unseen_video/walk/walk_chunk_0024_comparison.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('isaacgym-test-videos-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+		<p class="figure-caption">
+			[5] Han et al, KungfuBot2: Learning Versatile Motion Skills for Humanoid Whole-Body Control, arXiv 2025.
+		</p>
+	</div>
+	<div class="hr"></div>
+	<div>
+		<h2>Sim-to-Sim Imitation Performance</h2>
+		<p class="figure-caption">
+			To validate whether a policy trained on <span class="phuma">PHUMA</span> can be transferred to a different environment, we evaluate the imitation performance on unseen motions and test videos in the MuJoCo environment. The video below shows qualitative motion imitation results using the student policy on unseen motions and test videos. The ghost represents the reference motion to be imitated. As shown, the student policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
+		</p>
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Unseen Motions</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('mujoco-unseen-motions-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="mujoco-unseen-motions-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/jump/humanml_013477_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/jump/humanml_008188_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/kick/fitness_subset_0006_Chasse_Arm_Circle_clip_7_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/kick/fitness_subset_0035_Side_To_Side_Step_Singi_F_Arm_Swing_R_clip_5_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/kick/fitness_subset_0079_Step_Out_clip_1_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/kick/fitness_subset_0086_Side_Step_To_905_Butt_Kicks_clip_61_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/kick/humanml_006364_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/lunge/game_motion_subset_0005_Dual_Wield_Zweischwertkrabbe_clip_7_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/squat/fitness_subset_0013_Side_Step_Arm_Swing_To_Claf_clip_11_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/walk/humanml_003435_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/walk/humanml_010342_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/walk/idea400_Hand_touches_thigh_and_walking_at_the_same_time_clip1_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/walk/LocoMuJoCo_walk_chunk_0021.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/run/humanml_001877_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-val/run/humanml_010683_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('mujoco-unseen-motions-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+
+		<div class="carousel-section">
+			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Test Videos</h3>
+			<div class="carousel-container">
+				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('mujoco-test-videos-carousel', -1)">&#8249;</button>
+				<div class="carousel-wrapper" id="mujoco-test-videos-carousel">
+					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-unseen_video/jump/jump_chunk_0007.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-unseen_video/kick/kick_chunk_0030.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-unseen_video/kick/kick_chunk_0044.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-unseen_video/twist/twist_chunk_0046.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/mujoco-unseen_video/walk/walk_chunk_0024.mp4" type="video/mp4">
+							</video>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('mujoco-test-videos-carousel', 1)">&#8250;</button>
+			</div>
+		</div>
+	</div>
+	
+<footer>
+<a href="index.html#top"><i class="fa fa-arrow-up"></i><br/>Return to top</a>
+</footer>
