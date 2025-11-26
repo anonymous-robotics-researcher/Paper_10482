@@ -389,21 +389,24 @@
 		<h2>Evaluation of Retargeting Methods</h2>
 		<p class="figure-caption">
 			The video below shows the example of retargeting results using different retargeting methods. Mink[1] shows unnatural locomotion
-			patterns where the humanoid appears to walk on a tightrope, and SINK[2] shows more human-like results, but still shows some floating and penetration. Our PhySINK shows not only remaining human-like, but also physically reliable motions.
+			patterns where the humanoid appears to walk on a tightrope, and SINK shows more human-like results, but still shows some floating and penetration. Our PhySINK shows not only remaining human-like, but also physically reliable motions.
 		</p>
-		<video playsinline="" autoplay="" loop="" preload="" muted="" width="99%">
-			<source src="videos/Retargeting_Methods_Evaluation.mp4" type="video/mp4">
-		</video>
+		<div style="text-align: center; margin: 20px 0;">
+			<video playsinline autoplay loop preload="auto" muted style="width: 100%; max-width: 960px; height: auto; display: block; margin: 0 auto;">
+				<source src="videos/Retargeting_Methods_Evaluation.mp4" type="video/mp4">
+				Your browser does not support the video tag.
+			</video>
+		</div>
 		<p class="figure-caption">
 			[1] Kevin Zakka. Mink: Python inverse kinematics based on MuJoCo, 2025. <br>
-			[2] He et al. Learning human-to-humanoid real-time whole-body teleoperation, IROS 2024.
+			
 		</p>
 	</div>
 	<div class="hr"></div>
 	<div style="overflow: hidden">
 		<h2>Qualitative Comparison with GMR</h2>
 		<p class="figure-caption">
-			The video below shows the qualitative comparison with GMR[3]. GMR retargets motion using a fixed height derived from the first component of beta, which is the maximum parameter that determines the shape of human motion. However, this parameter may not correspond to the actual height of the human. As a result, GMR exhibits imperfect retargeting when the human subject is significantly smaller or larger than average.
+			The video below shows a qualitative comparison with GMR [2]. GMR uses linear scaling based on the source subject's height (estimated from the first SMPL shape parameter β₀) to generate retargeting targets. This approach works well for average-height subjects but produces significant artifacts for tall or short subjects—tall subjects result in unreachable targets causing floating and locked knees, while short subjects produce compressed targets forcing unnatural crouches.
 		</p>
 		<div class="carousel-section carousel-section-gmr">
 			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Small Humans</h3>
@@ -411,6 +414,16 @@
 				<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('gmr-small-carousel', -1)">&#8249;</button>
 				<div class="carousel-wrapper" id="gmr-small-carousel">
 					<div class="carousel-track">
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_000630_chunk_0001.mp4" type="video/mp4">
+							</video>
+						</div>
+						<div class="carousel-item">
+							<video playsinline="" autoplay="" loop="" preload="" muted="">
+								<source src="videos/retargeting_comparison/small/humanml_003578_chunk_0000.mp4" type="video/mp4">
+							</video>
+						</div>
 						<div class="carousel-item">
 							<video playsinline="" autoplay="" loop="" preload="" muted="">
 								<source src="videos/retargeting_comparison/small/humanml_000480_chunk_0001.mp4" type="video/mp4">
@@ -424,16 +437,6 @@
 						<div class="carousel-item">
 							<video playsinline="" autoplay="" loop="" preload="" muted="">
 								<source src="videos/retargeting_comparison/small/humanml_000630_chunk_0000.mp4" type="video/mp4">
-							</video>
-						</div>
-						<div class="carousel-item">
-							<video playsinline="" autoplay="" loop="" preload="" muted="">
-								<source src="videos/retargeting_comparison/small/humanml_000630_chunk_0001.mp4" type="video/mp4">
-							</video>
-						</div>
-						<div class="carousel-item">
-							<video playsinline="" autoplay="" loop="" preload="" muted="">
-								<source src="videos/retargeting_comparison/small/humanml_003578_chunk_0000.mp4" type="video/mp4">
 							</video>
 						</div>
 						<div class="carousel-item">
@@ -509,14 +512,14 @@
 			</div>
 		</div>
 		<p class="figure-caption">
-			[3] Ze et al, GMR: General Motion Retargeting, arXiv 2025.
+			[2] Ze et al, GMR: General Motion Retargeting, arXiv 2025.
 		</p>
 	</div>
 	<div class="hr"></div>
 	<div>
 		<h2>Imitation Performance</h2>
 		<p class="figure-caption">
-			In motion imitation tasks, we train policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen motions. We use MaskedMimic[4] for training, and all policies are trained on IsaacGym. The videos below show qualitative motion imitation results using the student policy on unseen motions. The ghost represents the reference motion to be imitated. As shown, the policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
+			In motion imitation tasks, we train policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen motions. We use MaskedMimic[3] for training, and all policies are trained on IsaacGym. The videos below show qualitative motion imitation results using the student policy on unseen motions. The ghost represents the reference motion to be imitated. As shown, the policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
 		</p>
 		<div class="carousel-container">
 			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('maskedmimic-imitation-carousel', -1)">&#8249;</button>
@@ -612,14 +615,14 @@
 			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('maskedmimic-imitation-carousel', 1)">&#8250;</button>
 		</div>
 		<p class="figure-caption">
-			[4] Tessler et al, MaskedMimic: Unified Physics-Based Character Control Through Masked Motion, SIGGRAPH 2024.
+			[3] Tessler et al, MaskedMimic: Unified Physics-Based Character Control Through Masked Motion, SIGGRAPH 2024.
 		</p>
 	</div>
 	<div class="hr"></div>
 	<div>
 		<h2>Path Following Performance</h2>
 		<p class="figure-caption">
-			In path following tasks, we distill the teacher policy by providing only the pelvis information (position and rotation) from the reference motions. We train path following policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen paths. The videos below show qualitative path following results using the student policy on unseen paths. 
+			In path following tasks, we distill the teacher policy by providing only the pelvis information (position(blue) and rotation(green)) from the reference motions. We train path following policies on <span class="phuma">PHUMA</span> and AMASS, and evaluate them on unseen paths. The videos below show qualitative path following results using the student policy on unseen paths. 
 		</p>
 		<div class="carousel-container">
 			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('path-following-carousel', -1)">&#8249;</button>
@@ -704,7 +707,7 @@
 	<div>
 		<h2>Imitation Performance</h2>
 		<p class="figure-caption">
-			In motion imitation tasks, we train a policy on <span class="phuma">PHUMA</span> and evaluate it on unseen motions from test videos, comparing it with a policy trained on AMASS. We use MLP version of kungfubot[5] for training. All policies are trained on Isaacgym. The video below shows qualitative motion imitation results using the student policy on unseen motions and test videos. The ghost represents the reference motion to be imitated. As shown, the student policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
+			In motion imitation tasks, we train a policy on <span class="phuma">PHUMA</span> and evaluate it on unseen motions from test videos, comparing it with a policy trained on AMASS. We use MLP version of kungfubot[4] for training. All policies are trained on Isaacgym. The video below shows qualitative motion imitation results using the student policy on unseen motions and test videos. The ghost represents the reference motion to be imitated. As shown, the student policy trained on <span class="phuma">PHUMA</span> demonstrates better motion imitation performance compared to the policy trained on AMASS.
 		</p>
 		<div class="carousel-section">
 			<h3 style="text-align: center; margin-bottom: 8px; color: rgb(54, 54, 54);">Unseen Motions</h3>
@@ -830,7 +833,7 @@
 			</div>
 		</div>
 		<p class="figure-caption">
-			[5] Han et al, KungfuBot2: Learning Versatile Motion Skills for Humanoid Whole-Body Control, arXiv 2025.
+			[4] Han et al, KungfuBot2: Learning Versatile Motion Skills for Humanoid Whole-Body Control, arXiv 2025.
 		</p>
 	</div>
 	<div class="hr"></div>
