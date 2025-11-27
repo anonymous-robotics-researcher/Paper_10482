@@ -103,7 +103,7 @@ pre code {background-color: transparent; padding: 0;}
 #gmr-big-carousel .carousel-item,
 #maskedmimic-imitation-carousel .carousel-item,
 #path-following-carousel .carousel-item,
-#physink-fail-carousel .carousel-item {width: 100%; padding: 0;}
+#physink-fail-carousel .carousel-item {width: 100% !important; padding: 0;}
 #isaacgym-unseen-motions-carousel .carousel-item video,
 #isaacgym-test-videos-carousel .carousel-item video,
 #mujoco-unseen-motions-carousel .carousel-item video,
