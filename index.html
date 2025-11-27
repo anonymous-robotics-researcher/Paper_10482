@@ -31,7 +31,8 @@
 			'gmr-small-carousel': 1,
 			'gmr-big-carousel': 1,
 			'maskedmimic-imitation-carousel': 1,
-			'path-following-carousel': 1
+			'path-following-carousel': 1,
+			'physink-fail-carousel': 1
 		};
 		
 		function initCarousel(carouselId) {
@@ -118,6 +119,7 @@
 			initCarousel('gmr-big-carousel');
 			initCarousel('maskedmimic-imitation-carousel');
 			initCarousel('path-following-carousel');
+			initCarousel('physink-fail-carousel');
 		});
 	</script>
 	<script type="text/x-mathjax-config">
@@ -966,7 +968,31 @@
 			</div>
 		</div>
 	</div>
-	
+	<div class="hr"></div>
+	<div>
+		<h2>Qualitative Results what PhySINK fails</h2>
+		<p class="figure-caption">
+			The following videos show representative failure cases of PhySINK, where the method struggles with motions that involve: (1) climbing movements with significant vertical root translation, or (2) motions where body parts other than the feet contact the ground.
+		</p>
+		<div class="carousel-container">
+			<button class="carousel-btn carousel-btn-left" onclick="moveCarousel('physink-fail-carousel', -1)">&#8249;</button>
+			<div class="carousel-wrapper" id="physink-fail-carousel">
+				<div class="carousel-track">
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/physink_fail/humanml_000289_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+					<div class="carousel-item">
+						<video playsinline="" autoplay="" loop="" preload="" muted="">
+							<source src="videos/physink_fail/humanml_007167_chunk_0000.mp4" type="video/mp4">
+						</video>
+					</div>
+				</div>
+			</div>
+			<button class="carousel-btn carousel-btn-right" onclick="moveCarousel('physink-fail-carousel', 1)">&#8250;</button>
+		</div>
+	</div>
 <footer>
 <a href="index.html#top"><i class="fa fa-arrow-up"></i><br/>Return to top</a>
 </footer>
